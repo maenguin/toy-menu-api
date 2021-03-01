@@ -117,6 +117,58 @@ public class MenuGroupSaveDto {
 ```
 
 ### 조회
+
+#### MenuController
+```java
+@GetMapping("/api/v1/store/menu-group/menu/{menuId}")
+public ApiResponse<MenuDto> findMenuById(@PathVariable("menuId") Long menuId) {
+    return new ApiResponse<>(menuService.findMenuById(menuId));
+}
+
+@GetMapping("/api/v1/store/{storeId}/menu-group")
+public ApiResponse<List<MenuGroupDto>> findAllMenuByStore(@PathVariable("storeId") Long storeId) {
+    return ApiResponse.of(menuService.findAllByStore(storeId));
+}
+```
+* 조회는 매장에 있는 모든 메뉴를 가져오는 findAllMenuByStore와 메뉴의 상세 정보를 가져오는 findMenuById 두개를 구현했습니다.  
+
+
+#### MenuService
+```java
+public MenuDto findMenuById(Long menuId) {
+     Menu findMenu = menuRepository.findById(menuId).orElseThrow(EntityNotFoundException::new);
+     return new MenuDto(findMenu);
+ }
+
+ public List<MenuGroupDto> findAllByStore(Long storeId) {
+     return menuGroupRepository.findAllByStore(storeId).stream()
+             .map(MenuGroupDto::new)
+             .collect(Collectors.toList());
+ }
+```
+* 메뉴서비스에서는 엔티티를 dto로 변환하는 과정을 수행합니다.  
+
+#### MenuGroupRepsoitory
+```java
+@Query("select distinct mg from MenuGroup mg" +
+            " join mg.store s on s.id = :storeId" +
+            " left join fetch mg.menus m ")
+List<MenuGroup> findAllByStore(@Param("storeId") Long storeId);
+```
+* Jpa에서 컬렉션을 페치조인은 1개만 가능하므로 menu만 페치조인을 수행하고 나머지 연관된 엔티티 컬렉션은 지연로딩될떄 `배치사이즈` 기능을 통해 최적화를 했습니다.    
+
+#### MenuRepository
+```java
+ @Query("select m from Menu m " +
+            " join fetch m.menuGroup mg" +
+            " left join fetch m.menuOptionGroups mo" +
+            " where m.id = :id")
+Optional<Menu> findById(@Param("id") Long id);
+```
+* 다대일인 메뉴그룹과 일대다인 메뉴옵션그룹까지 페치 조인을 수행하고 메뉴 옵션은 배치사이즈를 통해 지연로딩합니다.  
+
+#### Menu
+
 ### 수정
 
 ### 삭제
