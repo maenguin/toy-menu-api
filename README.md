@@ -170,11 +170,31 @@ Optional<Menu> findById(@Param("id") Long id);
 #### Menu
 
 ### 수정
+#### MenuService
+```java
+@Transactional
+public void updateMenuGroup(Long menuGroupId, MenuGroupSaveDto menuGroupSaveDto) {
+
+    menuGroupRepository.findById(menuGroupId)
+                    .orElseThrow(EntityNotFoundException::new)
+                    .update(menuGroupSaveDto.getName(),menuGroupSaveDto.getPriority());
+}
+
+@Transactional
+public void updateMenu(Long menuId, MenuSaveDto menuSaveDto) {
+
+    menuRepository.findById(menuId)
+            .orElseThrow(EntityNotFoundException::new)
+            .update(menuSaveDto.getName(),menuSaveDto.getPrice(), menuSaveDto.getCount());
+}
+```
+* 엔티티별로 기본적인 수정 API를 만들어 줍니다.
+* JPA의 dirty checking을 최대한 사용하여 구현합니다.
 
 ### 삭제
 
 
-## 리팩토링
+## 개선
 
 ### 연쇄 저장
 `영속성 전이`기능을 사용하면 부모 엔티티가 영속 상태로 변할때 자식 엔티티도 같이 영속 상태로 변합니다.  
