@@ -167,7 +167,6 @@ Optional<Menu> findById(@Param("id") Long id);
 ```
 * 다대일인 메뉴그룹과 일대다인 메뉴옵션그룹까지 페치 조인을 수행하고 메뉴 옵션은 배치사이즈를 통해 지연로딩합니다.  
 
-#### Menu
 
 ### 수정
 #### MenuService
@@ -192,7 +191,20 @@ public void updateMenu(Long menuId, MenuSaveDto menuSaveDto) {
 * JPA의 dirty checking을 최대한 사용하여 구현합니다.
 
 ### 삭제
+#### MenuService
+```java
+@Transactional
+public void deleteMenuGroup(Long menuGroupId) {
+    menuGroupRepository.deleteById(menuGroupId);
+}
 
+@Transactional
+public void deleteMenu(Long menuId) {
+    menuRepository.deleteById(menuId);
+}
+```
+* 영속성 전이 옵션중에 `REMOVE`옵션을 키게 되면 부모 엔티티가 삭제될때 자식 엔티티도 같이 삭제가 됩니다.  
+* 현재 메뉴그룹 - 메뉴 - 메뉴옵션그룹 - 메뉴옵션은 부모 자식 관계로 묶여있기 때문에 부모가 삭제되면 하위의 자식들도 연쇄적으로 삭제됩니다.
 
 ## 개선
 
@@ -229,6 +241,19 @@ public class MenuGroupSaveDto {
 * MenuGroupSaveDto에 MenuSaveDto List가 추가되었고 MenuGroupSaveDto에서 toEntity 호출시 MenuSaveDto의 toEntity를 호출하게 됩니다.  
 * MenuSaveDto의 toEntity에는 MenuGroup에 Menu를 추가하는 로직이 담겨져 있기 때문에 결과적으로 MenuGroup이 영속 상태로 변할때 추가한 Menu도 영속 상태로 변하게 됩니다.  
 * 같은 방법으로 Menu와 MenuOptionGroup 그리고 MenuOption에도 적용해서 메뉴 그룹을 저장할때 메뉴 옵션까지 저장되게끔 바꾸었습니다.  
+
+### 저장과 수정의 통합
+모바일앱에서 기존의 어떠한 항목을 수정하면서 새롭게 항목을 추가하는 동작을 한 화면에서 처리하는걸 본적이 있습니다.  
+그것을 구현한다고 가정했을때 만약 API가 저장과 수정을 통합해서 제공한다면 정말 편하게 클라이언트단에서 구현할 수 있을것이라 느껴졌습니다.  
+(고민중)
+
+
+### 메뉴 복사 기능
+메뉴 옵션의 경우 메뉴마다 중복되는 경우가 잦습니다.  
+예를들어 고구마피자에 토핑과 사이드메뉴 옵션이 있는 경우 페페로니피자에도 토핑과 사이드메뉴 옵션이 있습니다.  
+만약 판매하는 피자가 여러개라면 피자별로 토핑그룹과 사이드메뉴그룹을 생성하고 세부 옵션을 추가 생성해야만합니다.  
+이를 용이하게 하기 위해 메뉴 복사 기능이 필요할것 같습니다.(구현중)  
+
 
 
 
