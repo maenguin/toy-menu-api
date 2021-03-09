@@ -1,12 +1,10 @@
 package maenguin.toymenuapi.service;
 
 import lombok.RequiredArgsConstructor;
-import maenguin.toymenuapi.domain.Menu;
-import maenguin.toymenuapi.domain.MenuGroup;
-import maenguin.toymenuapi.domain.MenuOptionGroup;
-import maenguin.toymenuapi.domain.Store;
+import maenguin.toymenuapi.domain.*;
 import maenguin.toymenuapi.dto.Menu.*;
 import maenguin.toymenuapi.repository.MenuGroupRepository;
+import maenguin.toymenuapi.repository.MenuOptionGroupRepository;
 import maenguin.toymenuapi.repository.MenuRepository;
 import maenguin.toymenuapi.repository.StoreRepository;
 import org.springframework.stereotype.Service;
@@ -26,6 +24,7 @@ public class MenuService {
     private final EntityManager em;
     private final MenuRepository menuRepository;
     private final MenuGroupRepository menuGroupRepository;
+    private final MenuOptionGroupRepository menuOptionGroupRepository;
     private final StoreRepository storeRepository;
 
 
@@ -94,14 +93,28 @@ public class MenuService {
                 .update(menuSaveDto.getName(),menuSaveDto.getPrice(), menuSaveDto.getCount());
     }
 
+    @Transactional
+    public void copyMenuOptionGroup(Long menuOptionGroupId, Long menuId) {
+        Menu targetMenu = menuRepository.findById(menuId)
+                .orElseThrow(EntityNotFoundException::new);
 
+        MenuOptionGroup source = menuOptionGroupRepository.findByIdWithMenuOption(menuOptionGroupId)
+                .orElseThrow(EntityNotFoundException::new);
 
+        MenuOptionGroup dest = MenuOptionGroup.builder()
+                .name(source.getName())
+                .minSelectCount(source.getMinSelectCount())
+                .maxSelectCount(source.getMaxSelectCount())
+                .build();
+        dest.changeMenu(targetMenu);
 
+        source.getMenuOptions().stream()
+                .map(mo -> MenuOption.builder()
+                        .name(mo.getName())
+                        .price(mo.getPrice())
+                        .build())
+                .forEach(mo -> mo.changeMenuOptionGroup(dest));
 
-
-
-
-
-
-
+        menuOptionGroupRepository.save(dest);
+    }
 }

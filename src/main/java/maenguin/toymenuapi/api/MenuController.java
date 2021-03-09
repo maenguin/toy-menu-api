@@ -62,8 +62,10 @@ public class MenuController {
     }
 
 
-
-
+    @PostMapping("/menuGroup/menu/menuOptionGroup/{id}/copy")
+    public void copyMenuOptionGroup(@PathVariable("id") Long menuOptionGroupId, @RequestParam Long menuId) {
+        menuService.copyMenuOptionGroup(menuOptionGroupId, menuId);
+    }
 
     @Data
     static class ApiResponse<T>{
