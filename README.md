@@ -250,10 +250,38 @@ public class MenuGroupSaveDto {
 
 ### 메뉴 복사 기능
 메뉴 옵션의 경우 메뉴마다 중복되는 경우가 잦습니다.  
-예를들어 고구마피자에 토핑과 사이드메뉴 옵션이 있는 경우 페페로니피자에도 토핑과 사이드메뉴 옵션이 있습니다.  
+예를들어 고구마 피자에 토핑과 사이드메뉴 옵션이 있는 경우 페페로니 피자에도 토핑과 사이드메뉴 옵션이 있습니다.  
 만약 판매하는 피자가 여러개라면 피자별로 토핑그룹과 사이드메뉴그룹을 생성하고 세부 옵션을 추가 생성해야만합니다.  
-이를 용이하게 하기 위해 메뉴 복사 기능이 필요할것 같습니다.(구현중)  
+이를 용이하게 하기 위해 메뉴 복사 기능이 필요할것 같습니다.  
 
+#### MenuService
+```java
+@Transactional
+    public void copyMenuOptionGroup(Long menuOptionGroupId, Long menuId) {
+        Menu targetMenu = menuRepository.findById(menuId)
+                .orElseThrow(EntityNotFoundException::new);
+
+        MenuOptionGroup source = menuOptionGroupRepository.findByIdWithMenuOption(menuOptionGroupId)
+                .orElseThrow(EntityNotFoundException::new);
+
+        MenuOptionGroup dest = MenuOptionGroup.builder()
+                .name(source.getName())
+                .minSelectCount(source.getMinSelectCount())
+                .maxSelectCount(source.getMaxSelectCount())
+                .build();
+        dest.changeMenu(targetMenu);
+
+        source.getMenuOptions().stream()
+                .map(mo -> MenuOption.builder()
+                        .name(mo.getName())
+                        .price(mo.getPrice())
+                        .build())
+                .forEach(mo -> mo.changeMenuOptionGroup(dest));
+
+        menuOptionGroupRepository.save(dest);
+    }
+```
+* 메뉴옵션그룹을 통채로 다른 메뉴에 복사합니다.
 
 
 
